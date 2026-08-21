@@ -6,7 +6,7 @@ import com.emberjs.gts.GtsFileType
 import com.emberjs.utils.parentEmberModule
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.execution.process.OSProcessUtil
 import com.intellij.execution.wsl.WslPath
 import com.intellij.javascript.nodejs.PackageJsonData
@@ -23,9 +23,9 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.isFile
-import com.intellij.platform.lsp.api.LspServerDescriptor
-import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.api.LspServerSupportProvider
+import com.intellij.lang.typescript.lsp.TypeScriptLspClientDescriptor
+import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.psi.PsiManager
 import com.intellij.util.FileContentUtil
 import org.eclipse.lsp4j.ServerInfo
@@ -39,9 +39,9 @@ import kotlin.io.path.Path
 
 private const val AVAILABILITY_CACHE_TTL_MS = 5000L
 
-class GlintLspSupportProvider : LspServerSupportProvider {
+class GlintLspSupportProvider : LspIntegrationProvider {
     var willStart = false
-    override fun fileOpened(project: Project, file: VirtualFile, serverStarter: LspServerSupportProvider.LspServerStarter) {
+    override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspIntegrationProvider.LspClientStarter) {
         if (!getGlintDescriptor(project).isAvailable(file)) return
         getGlintDescriptor(project).ensureStarted(file)
     }
@@ -54,9 +54,9 @@ fun getGlintDescriptor(project: Project): GlintLspServerDescriptor {
 
 
 @Service(Service.Level.PROJECT)
-class GlintLspServerDescriptor(private val myProject: Project) : LspServerDescriptor(myProject, "Glint"), Disposable {
+class GlintLspServerDescriptor(private val myProject: Project) : TypeScriptLspClientDescriptor(myProject, "Glint"), Disposable {
     val psiManager = PsiManager.getInstance(myProject)
-    val lspServerManager = LspServerManager.getInstance(project)
+    val lspClientManager = LspClientManager.getInstance(project)
     var isWsl = false
     var wslDistro = ""
     var glintCoreDir: VirtualFile? = null
@@ -66,7 +66,7 @@ class GlintLspServerDescriptor(private val myProject: Project) : LspServerDescri
 
     public val server
         get() =
-           lspServerManager.getServersForProvider(GlintLspSupportProvider::class.java).firstOrNull()
+           lspClientManager.getClients(GlintLspSupportProvider::class.java).firstOrNull()
 
     /**
      * getAttributeDescriptor/getAttributesDescriptors calls this for every attribute of every
@@ -191,7 +191,7 @@ class GlintLspServerDescriptor(private val myProject: Project) : LspServerDescri
 
     fun ensureStarted(vfile: VirtualFile) {
         if (!isAvailable(vfile)) return
-        lspServerManager.ensureServerStarted(GlintLspSupportProvider::class.java, getGlintDescriptor(project))
+        lspClientManager.ensureClientStarted(GlintLspSupportProvider::class.java, getGlintDescriptor(project))
         server?.let {
             if (it.initializeResult?.serverInfo == null) {
                 it.initializeResult?.serverInfo = ServerInfo()
@@ -257,7 +257,7 @@ class GlintLspServerDescriptor(private val myProject: Project) : LspServerDescri
         return commandLine
     }
 
-    override fun startServerProcess(): OSProcessHandler {
+    override fun startServerProcess(): BaseProcessHandler<*> {
         val r = super.startServerProcess()
         Timer().schedule(5000) {
             ApplicationManager.getApplication().invokeLater {
@@ -319,10 +319,6 @@ class GlintLspServerDescriptor(private val myProject: Project) : LspServerDescri
                 file.fileType is GtsFileType ||
                 file.fileType is JavaScriptFileType
     }
-
-    override val lspDiagnosticsSupport = null
-    override val lspGoToDefinitionSupport = false
-    override val lspCompletionSupport = null
 
     override fun dispose() {}
 }

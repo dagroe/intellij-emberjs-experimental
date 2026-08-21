@@ -28,7 +28,7 @@ class GlintReference(val elem: PsiElement): PsiReferenceBase<PsiElement>(elem), 
         val psiFile = PsiManager.getInstance(elem.project).findFile(elem.originalVirtualFile!!)
         val document = PsiDocumentManager.getInstance(elem.project).getDocument(psiFile!!)!!
         val service = GlintLanguageServiceProvider(elem.project).getService(elem.originalVirtualFile!!)
-        return service?.getNavigationFor(document, elem)?.firstOrNull()
+        return service?.getNavigationFor(document, elem, elem.textOffset)?.firstOrNull()
     }
 
 }

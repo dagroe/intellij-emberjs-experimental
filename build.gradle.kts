@@ -17,13 +17,13 @@ plugins {
     // Kotlin support
     id("org.jetbrains.kotlin.jvm") version "2.4.20"
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-    id("org.jetbrains.intellij.platform") version "2.13.1"
+    id("org.jetbrains.intellij.platform") version "2.18.1"
 //    id("org.jetbrains.intellij.platform.migration") version "2.0.0-beta7"
 }
 
 
 group = "com.emberjs"
-version = "2026.1.1"
+version = "2026.2.1"
 
 dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test")
@@ -36,17 +36,20 @@ dependencies {
     // and https://www.jetbrains.com/intellij-repository/snapshots/
     // https://plugins.jetbrains.com/plugin/6884-handlebars-mustache/versions/stable
     intellijPlatform {
-        plugins(listOf("com.dmarcotte.handlebars:261.22158.180"))
-        bundledPlugins(listOf("JavaScript", "com.intellij.css", "org.jetbrains.plugins.yaml", "com.intellij.modules.json"))
+        plugins(listOf("com.dmarcotte.handlebars:262.8665.173"))
+        bundledPlugins(listOf("JavaScript", "com.intellij.css", "org.jetbrains.plugins.yaml", "com.intellij.modules.json", "intellij.javascript.eslint"))
+        bundledModules(listOf("intellij.platform.testRunner", "intellij.platform.smRunner", "intellij.xml.structureView", "intellij.xml.structureView.impl"))
         pluginVerifier()
         zipSigner()
         testFramework(TestFrameworkType.Platform)
-        create(IntelliJPlatformType.IntellijIdeaUltimate, "2026.1")
+        create(IntelliJPlatformType.IntellijIdeaUltimate, "2026.2.1")
     }
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
+    // the 2026.2 platform ships Java 25 bytecode and runs on JBR 25, so the build needs a JDK 25
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 // Configure gradle-intellij-plugin plugin.
@@ -64,11 +67,11 @@ intellijPlatform {
 
 tasks {
     compileKotlin {
-        compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
+        compilerOptions.jvmTarget.set(JvmTarget.JVM_25)
     }
 
     compileTestKotlin {
-        compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
+        compilerOptions.jvmTarget.set(JvmTarget.JVM_25)
     }
 
     publishPlugin {

@@ -32,10 +32,11 @@ internal class GtsFoldingBuilder : FoldingBuilderEx(), DumbAware {
         val tsView = view.getPsi(TS)
         val jsView = view.getPsi(JS)
 
-        val tsRegions = TypeScriptFoldingBuilder().buildFoldRegions((tsView ?: jsView)!!, p1, quick)
+        val jsPsiView = (tsView ?: jsView)!!
+        val tsRegions = TypeScriptFoldingBuilder().buildFoldRegions(jsPsiView, p1, quick)
         val htmlRegions = XmlFoldingBuilder().buildFoldRegions(root, p1, quick)
 
-        val templates = PsiTreeUtil.collectElements(tsView ?: jsView) { it.elementType == GtsElementTypes.GTS_OUTER_ELEMENT_TYPE }
+        val templates = PsiTreeUtil.collectElements(jsPsiView) { it.elementType == GtsElementTypes.GTS_OUTER_ELEMENT_TYPE }
 
         registeredRanges.addAll(templates.map { it.textRange })
 

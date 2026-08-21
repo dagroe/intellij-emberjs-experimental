@@ -1,0 +1,10 @@
+<idea-plugin>
+    <!-- ESLint moved out of the JavaScript plugin into its own bundled plugin in 2026.1 -->
+    <extensions defaultExtensionNs="com.intellij">
+        <externalAnnotator language="Gts" implementationClass="com.emberjs.hbs.linter.eslint.GtsEslintExternalAnnotator"/>
+        <externalAnnotator language="Handlebars" implementationClass="com.emberjs.hbs.linter.eslint.GtsEslintExternalAnnotator"/>
+        <actionOnSave id="EsLintActionOnSave"
+                      implementation="EsLintActionOnSave"
+                      order="after FormatOnSaveAction, before PrettierActionOnSave"/>
+    </extensions>
+</idea-plugin>

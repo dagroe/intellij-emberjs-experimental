@@ -33,8 +33,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.impl.highlighting.DiagnosticAndQuickFixes
+import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.impl.features.highlighting.DiagnosticAndQuickFixes
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -45,10 +45,6 @@ import com.intellij.util.containers.toMutableSmartList
 import org.eclipse.lsp4j.CompletionItem
 import org.eclipse.lsp4j.DiagnosticSeverity
 import java.net.URL
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletableFuture.completedFuture
-import java.util.concurrent.Future
-import java.util.stream.Stream
 
 class GlintLanguageServiceProvider(val project: Project) : JSLanguageServiceProvider {
     val descriptor = getGlintDescriptor(project)
@@ -63,9 +59,9 @@ class GlintLanguageServiceProvider(val project: Project) : JSLanguageServiceProv
 
 
 
-class GlintTypeScriptService(project: Project) : BaseLspTypeScriptService(project, GlintLspSupportProvider::class.java) {
+class GlintTypeScriptService(project: Project) : BaseLspTypeScriptService(project, GlintLspSupportProvider::class.java, getGlintDescriptor(project)) {
     var currentlyChecking: PsiElement? = null
-    val lspServerManager = LspServerManager.getInstance(project)
+    val lspClientManager = LspClientManager.getInstance(project)
 
     companion object {
         private val LOG = Logger.getInstance(GlintTypeScriptService::class.java)
@@ -141,7 +137,7 @@ class GlintTypeScriptService(project: Project) : BaseLspTypeScriptService(projec
             elem = DelegateElement(elem, element, document)
         }
 
-        val links = getServer()?.requestExecutor?.getElementDefinitions(element.originalVirtualFile!!, (elem as PsiElement).textOffset)
+        val links = getLspClient()?.requestExecutor?.getElementDefinitions(element.originalVirtualFile!!, (elem as PsiElement).textOffset)
         val psiManager = PsiManager.getInstance(project)
         return links?.map {
             val vFile = VfsUtil.findFileByURL(URL(it.targetUri))
@@ -166,24 +162,23 @@ class GlintTypeScriptService(project: Project) : BaseLspTypeScriptService(projec
         return this.isAcceptable(virtualFile)
     }
 
-    override fun getSignatureHelp(file: PsiFile, offset: Int): Future<Stream<JSFunctionType>?>? = null
+    override suspend fun getSignatureHelp(file: PsiFile, offset: Int): Sequence<JSFunctionType>? = null
 
     override fun isDisabledByContext(context: VirtualFile): Boolean {
         return getDescriptor()?.isAvailable(context)?.not() ?: return true
     }
 
-    override fun highlight(file: PsiFile): CompletableFuture<List<JSAnnotationError>>? {
-        val virtualFile = file.virtualFile ?: return completedFuture(emptyList())
+    fun getGlintErrors(file: PsiFile): List<GlintAnnotationError> {
+        val virtualFile = file.virtualFile ?: return emptyList()
         if (getDescriptor()?.isAvailable(virtualFile) != true) {
-            return completedFuture(emptyList())
+            return emptyList()
         }
-        val server = getServer() ?: return completedFuture(emptyList())
 
         EditorNotifications.getInstance(project).updateNotifications(virtualFile)
 
-        return completedFuture(server.getDiagnosticsAndQuickFixes(virtualFile).map {
+        return (getLspClient()?.getDiagnosticsAndQuickFixes(virtualFile) ?: emptyList()).map {
             GlintAnnotationError(it, virtualFile.canonicalPath)
-        })
+        }
     }
 
     override fun canHighlight(file: PsiFile) = file.fileType is HbFileType ||

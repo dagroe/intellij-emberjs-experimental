@@ -46,6 +46,16 @@
     <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
     <depends config-file="handlebars.xml">com.dmarcotte.handlebars</depends>
     <depends optional="true" config-file="hbs-injections.xml">org.intellij.intelliLang</depends>
+    <depends optional="true" config-file="eslint.xml">intellij.javascript.eslint</depends>
+
+    <!-- split out of the platform in 2026.1: test runner (ember test run configuration) and
+         the xml structure view (gts structure view) -->
+    <dependencies>
+        <module name="intellij.platform.testRunner"/>
+        <module name="intellij.platform.smRunner"/>
+        <module name="intellij.xml.structureView"/>
+        <module name="intellij.xml.structureView.impl"/>
+    </dependencies>
 
     <applicationListeners>
         <listener class="com.emberjs.hbs.HbMustacheNameSynchronizer$MyCommandListener" topic="com.intellij.openapi.command.CommandListener"/>
@@ -93,7 +103,7 @@
         <directoryProjectGenerator implementation="com.emberjs.cli.EmberCliAddonProjectGenerator"/>
         <projectTemplatesFactory implementation="com.emberjs.cli.EmberCliProjectTemplatesFactory"/>
         <moduleBuilder builderClass="com.emberjs.cli.EmberCLIProjectModuleBuilder"/>
-        <platform.lsp.serverSupportProvider implementation="com.emberjs.glint.GlintLspSupportProvider"/>
+        <platform.lsp.integrationProvider implementation="com.emberjs.glint.GlintLspSupportProvider"/>
         <lang.findUsagesProvider language="Handlebars"
                                  implementationClass="com.emberjs.hbs.HbsFindUsagesProvider"/>
 
@@ -181,8 +191,6 @@
         <externalAnnotator language="JavaScript" implementationClass="TemplateLintExternalAnnotator"/>
         <externalAnnotator language="Gts" implementationClass="TemplateLintExternalAnnotator"/>
         <externalAnnotator language="Handlebars" implementationClass="com.emberjs.gts.HbLintExternalAnnotator"/>
-        <externalAnnotator language="Gts" implementationClass="com.emberjs.hbs.linter.eslint.GtsEslintExternalAnnotator"/>
-        <externalAnnotator language="Handlebars" implementationClass="com.emberjs.hbs.linter.eslint.GtsEslintExternalAnnotator"/>
         <annotator language="Handlebars" implementationClass="com.emberjs.gts.HbLintAnnotator"/>
         <annotator language="HTML" implementationClass="com.emberjs.gts.HbLintAnnotator"/>
         <projectService serviceImplementation="TemplateLintConfiguration"/>
@@ -193,9 +201,6 @@
         <actionOnSaveInfoProvider id="TemplateLintOnSaveInfoProvider"
                                   implementation="TemplateLintOnSaveInfoProvider"
                                   order="after FormatOnSaveInfoProvider, before PrettierOnSaveInfoProvider, before BuildOnSaveInfoProvider, before FileWatcherOnSaveInfoProvider, before UploadOnSaveInfoProvider"/>
-        <actionOnSave id="EsLintActionOnSave"
-                      implementation="EsLintActionOnSave"
-                      order="after FormatOnSaveAction, before PrettierActionOnSave"/>
         <actionOnSave id="TemplateLintActionOnSave"
                       implementation="TemplateLintActionOnSave"
                       order="after FormatOnSaveAction, before PrettierActionOnSave"/>

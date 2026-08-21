@@ -124,9 +124,7 @@ class HbLintExternalAnnotator() : ExternalAnnotator<InitialInfo, AnnotationResul
         val result = AnnotationResult()
         if (collectedInfo.file?.viewProvider is HbFileViewProvider) {
             collectedInfo.project?.getService(GlintTypeScriptService::class.java)
-                    ?.highlight(collectedInfo.file!!)
-                    ?.get()
-                    ?.map { it as GlintAnnotationError }
+                    ?.getGlintErrors(collectedInfo.file!!)
                     ?.toCollection(result.annotationErrors)
         }
         result.initialInfo = collectedInfo

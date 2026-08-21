@@ -251,7 +251,7 @@ class GlintExternalAnnotator : JSLinterExternalAnnotator<GlintState>(true) {
         var res: List<JSAnnotationError>? = null
         try {
             val service = GlintTypeScriptService.getInstance(input.project)
-            res = service.highlight(input.psiFile)?.get()?.toList()
+            res = service.getGlintErrors(input.psiFile)
         } catch (ex: Exception) {
             res = null
         }
