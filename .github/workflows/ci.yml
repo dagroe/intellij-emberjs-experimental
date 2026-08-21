@@ -28,7 +28,7 @@ jobs:
 
       - uses: actions/setup-java@v6.0.1
         with:
-          java-version: '17'
+          java-version: '25'
           distribution: 'zulu'
 
       - uses: actions/cache@v6
@@ -59,7 +59,7 @@ jobs:
       - run: sudo apt-get install markdown -y
       - uses: actions/setup-java@v6.0.1
         with:
-          java-version: '17'
+          java-version: '25'
           distribution: 'zulu'
           
       - name: verify tag exists
@@ -153,7 +153,7 @@ jobs:
 
       - uses: actions/setup-java@v6
         with:
-          java-version: '17'
+          java-version: '25'
           distribution: 'zulu'
 
       - uses: actions/cache@v6
