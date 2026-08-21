@@ -4,6 +4,7 @@ import com.dmarcotte.handlebars.file.HbFileViewProvider
 import com.emberjs.gts.GtsFileViewProvider
 import com.emberjs.hbs.TagReferencesProvider
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -48,7 +49,9 @@ class HbXmlExtension: DefaultXmlExtension() {
             if (nameElement.text.startsWith(":") || nameElement.text.firstOrNull()?.isUpperCase() == true || nameElement.text.contains(".")) {
                 return null
             }
-            if (TagReferencesProvider.getReferencesByElement(nameElement.psi.parent).lastOrNull()?.resolve() != null) {
+            // resolve() reads indexes, so leave the reference to the platform while they build
+            if (!DumbService.isDumb(nameElement.psi.project) &&
+                    TagReferencesProvider.getReferencesByElement(nameElement.psi.parent).lastOrNull()?.resolve() != null) {
                 return null
             }
         }

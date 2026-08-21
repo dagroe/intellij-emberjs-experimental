@@ -38,7 +38,8 @@ class EmberXmlElementDescriptor(private val tag: XmlTag, private val declaration
     val version = "v2022.1.11"
 
     override fun equals(other: Any?): Boolean {
-        return (other as EmberXmlElementDescriptor).tag == this.tag && other.version == this.version
+        if (other !is EmberXmlElementDescriptor) return false
+        return other.tag == this.tag && other.version == this.version
     }
 
     override fun hashCode(): Int {
@@ -50,6 +51,11 @@ class EmberXmlElementDescriptor(private val tag: XmlTag, private val declaration
         var isCheckingRef = false
 
         fun forTag(tag: XmlTag): EmberXmlElementDescriptor? {
+            // Resolving needs indexes. Keep owning the tag while they are being built so the
+            // platform HTML descriptor, which is index-dependent too, is not asked instead.
+            if (DumbService.isDumb(tag.project)) {
+                return EmberXmlElementDescriptor(tag, null)
+            }
             val res: PsiNamedElement? = tag.references.lastOrNull()?.resolve() as? PsiNamedElement
             if (res == null && !tag.name.startsWith(":") && !tag.name.first().isUpperCase() || res is FakePsiElement) {
                 return null
@@ -122,21 +128,26 @@ class EmberXmlElementDescriptor(private val tag: XmlTag, private val declaration
     }
 
     override fun getAttributesDescriptors(context: XmlTag?): Array<out XmlAttributeDescriptor> {
+        // Dumb-aware callers such as the spell checker and Grazie ask for descriptors while
+        // indexing runs. Both the component data and the common HTML attributes read indexes.
+        if (DumbService.isDumb(project)) {
+            return XmlAttributeDescriptor.EMPTY
+        }
         val result = mutableListOf<XmlAttributeDescriptor>()
-        // HtmlNSDescriptorImpl.getCommonAttributeDescriptors queries FileBasedIndex without a
-        // dumb-mode guard of its own, throwing IndexNotReadyException while indexing.
-        val commonHtmlAttributes = if (DumbService.isDumb(project)) emptyArray() else HtmlNSDescriptorImpl.getCommonAttributeDescriptors(this.tag)
         val data = getReferenceData()
         val attributes = data.args.map { EmberAttributeDescriptor(this.tag, it.value, false, it.description, it.reference, null)  }
         result.addAll(attributes)
         if (data.hasSplattributes || this.declaration == null) {
-            result.addAll(commonHtmlAttributes)
+            result.addAll(HtmlNSDescriptorImpl.getCommonAttributeDescriptors(this.tag))
         }
         return result.toTypedArray()
     }
 
     override fun getAttributeDescriptor(attributeName: String?, context: XmlTag?): XmlAttributeDescriptor? {
         if (attributeName == null || context != this.tag) {
+            return null
+        }
+        if (DumbService.isDumb(project)) {
             return null
         }
         if (attributeName == "as") {
