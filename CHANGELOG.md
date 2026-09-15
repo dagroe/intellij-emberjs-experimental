@@ -1,6 +1,15 @@
 # Changelog
 
 
+## v2026.1.1 (2026-09-15)
+
+#### :bug: Bug Fix
+* [#392](https://github.com/patricklx/intellij-emberjs-experimental/pull/392) Fix editor freezes from uncached Glint availability checks (#391) ([@patricklx](https://github.com/patricklx))
+
+#### Committers: 1
+- Patrick Pircher ([@patricklx](https://github.com/patricklx))
+
+
 ## v2026.1.0 (2026-09-09)
 
 #### :rocket: Enhancement
